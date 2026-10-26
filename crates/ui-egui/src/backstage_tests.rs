@@ -16,7 +16,11 @@ use crate::backstage::{Backstage, NAV_W, Nav, Page, PrintScope, entries, format_
 use crate::{Services, SlideApp};
 
 fn harness(app: SlideApp) -> Harness<'static, SlideApp> {
-    let mut h = Harness::builder().with_size(egui::vec2(1400.0, 900.0)).build_ui_state(
+    harness_at_size(app, egui::vec2(1400.0, 900.0))
+}
+
+fn harness_at_size(app: SlideApp, size: egui::Vec2) -> Harness<'static, SlideApp> {
+    let mut h = Harness::builder().with_size(size).build_ui_state(
         |ui, app: &mut SlideApp| {
             app.logic(ui.ctx());
             app.ui(ui);
@@ -456,20 +460,27 @@ fn the_start_screen_is_file_home() {
     assert!(h.state().backstage.is_none());
 }
 
-/// The New-page template gallery stays inset from the page edge rather than touching the
-/// navigation/content boundary at high display scales.
+/// The New-page template gallery stays inside the content area at both regular and narrower
+/// window sizes, with a visible inset from the navigation and right window edges.
 #[test]
-fn new_page_template_gallery_has_a_clear_left_inset() {
-    let mut h = harness(new_app());
-    h.state_mut().run("app.backstage", json!({"page": "new"})).unwrap();
-    h.run_steps(3);
+fn new_page_template_gallery_has_clear_insets_at_common_window_sizes() {
+    for size in [egui::vec2(1400.0, 900.0), egui::vec2(1024.0, 768.0)] {
+        let mut h = harness_at_size(new_app(), size);
+        h.state_mut().run("app.backstage", json!({"page": "new"})).unwrap();
+        h.run_steps(3);
 
-    let template = h.get_by_label("Briefing");
-    assert!(
-        template.rect().left() >= NAV_W + 60.0,
-        "template gallery should keep a visible gap from the navigation edge; got x={}",
-        template.rect().left()
-    );
+        let template = h.get_by_label("Briefing");
+        assert!(
+            template.rect().left() >= NAV_W + 60.0,
+            "template gallery should keep a visible gap from the navigation edge at {size:?}; got x={}",
+            template.rect().left()
+        );
+        assert!(
+            template.rect().right() <= size.x - 16.0,
+            "template tile should remain inside the right window edge at {size:?}; got x={}",
+            template.rect().right()
+        );
+    }
 }
 
 /// The start screen is not a hidden slide: typing, pasting and IME events must not create or

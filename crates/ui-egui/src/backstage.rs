@@ -399,16 +399,13 @@ pub fn show(app: &mut SlideApp, ui: &mut Ui) {
         w.hovered.bg_stroke = Stroke::new(1.0, t.accent);
         w.active.bg_stroke = Stroke::new(1.0, t.accent);
         egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-            // The New page is a gallery of large, hand-drawn tiles. Give that gallery a little
-            // more breathing room than the denser File pages, especially at Windows display scales.
-            egui::Frame::NONE
-                .inner_margin(egui::Margin {
-                    left: if bs.page == Page::New { 64 } else { 48 },
-                    right: if bs.page == Page::New { 48 } else { 36 },
-                    top: 22,
-                    bottom: 32,
-                })
-                .show(ui, |ui| {
+            // Give the New-page gallery extra horizontal room without changing other File pages.
+            let content_margin = if bs.page == Page::New {
+                egui::Margin { left: 64, right: 48, top: 22, bottom: 32 }
+            } else {
+                egui::Margin { left: 48, right: 36, top: 22, bottom: 32 }
+            };
+            egui::Frame::NONE.inner_margin(content_margin).show(ui, |ui| {
                 ui.set_max_width(CONTENT_W);
                 if bs.page != Page::Home {
                     ui.label(RichText::new(bs.page.label()).font(theme::bold(22.0)).color(t.text));

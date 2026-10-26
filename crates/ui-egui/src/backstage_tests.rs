@@ -456,6 +456,22 @@ fn the_start_screen_is_file_home() {
     assert!(h.state().backstage.is_none());
 }
 
+/// The New-page template gallery stays inset from the page edge rather than touching the
+/// navigation/content boundary at high display scales.
+#[test]
+fn new_page_template_gallery_has_a_clear_left_inset() {
+    let mut h = harness(new_app());
+    h.state_mut().run("app.backstage", json!({"page": "new"})).unwrap();
+    h.run_steps(3);
+
+    let template = h.get_by_label("Briefing");
+    assert!(
+        template.rect().left() >= NAV_W + 60.0,
+        "template gallery should keep a visible gap from the navigation edge; got x={}",
+        template.rect().left()
+    );
+}
+
 /// The start screen is not a hidden slide: typing, pasting and IME events must not create or
 /// edit a presentation while the File-tab navigation keys still work.
 #[test]
